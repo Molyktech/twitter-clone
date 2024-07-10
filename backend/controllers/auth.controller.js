@@ -7,21 +7,21 @@ export const signup = async (req, res) => {
     const { fullName, userName, email, password } = req.body;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
+      return res.status(400).json({ error: "Invalid email format" });
     }
     if (password.length < 6) {
       return res
         .status(400)
-        .json({ message: "Password must be at least 6 characters" });
+        .json({ error: "Password must be at least 6 characters" });
     }
     const existingUser = await User.findOne({ userName });
     if (existingUser) {
-      return res.status(400).json({ message: "Username is already taken" });
+      return res.status(400).json({ error: "Username is already taken" });
     }
 
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
-      return res.status(400).json({ message: "Email is already exists" });
+      return res.status(400).json({ error: "Email is already exists" });
     }
 
     // Hash password
@@ -51,11 +51,11 @@ export const signup = async (req, res) => {
         message: "User created successfully",
       });
     } else {
-      res.status(400).json({ message: "Invalid user data" });
+      res.status(400).json({ error: "Invalid user data" });
     }
   } catch (error) {
     console.log("Error in signup controller: ", error.message);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -71,7 +71,7 @@ export const login = async (req, res) => {
     const isPasswordCorrect =
       user && ((await bcrypt.compare(password, user.password)) || "");
     if (!user || !isPasswordCorrect) {
-      return res.status(400).json({ message: "Invalid username or password" });
+      return res.status(400).json({ error: "Invalid username or password" });
     }
     generateTokenAndSetCookie(user._id, res);
     res.status(200).json({
@@ -87,7 +87,7 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.log("Error in login controller: ", error.message);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -97,7 +97,7 @@ export const logout = async (req, res) => {
     res.status(200).json({ message: "User logged out successfully" });
   } catch (error) {
     console.log("Error in logout controller: ", error.message);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -107,10 +107,10 @@ export const getUser = async (req, res) => {
     if (user) {
       res.status(200).json(user);
     } else {
-      res.status(404).json({ message: "User not found" });
+      res.status(404).json({ error: "User not found" });
     }
   } catch (error) {
     console.log("Error in getUser controller: ", error.message);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
