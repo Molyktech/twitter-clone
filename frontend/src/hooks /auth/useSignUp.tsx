@@ -1,4 +1,8 @@
-import { UseMutateFunction, useMutation } from "@tanstack/react-query";
+import {
+  UseMutateFunction,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -8,6 +12,7 @@ import {
   SuccessResponse,
 } from "../../models/type/auth";
 import { saveUser } from "../../utils/user.storage";
+import { QUERY_KEY } from "../../utils/constants";
 
 async function signUp(formData: RegisterCredentials): Promise<SuccessResponse> {
   try {
@@ -43,7 +48,7 @@ type IUseSignUp = {
 
 export function useSignUp(): IUseSignUp {
   const navigate = useNavigate();
-
+  const queryClient = useQueryClient();
   const {
     mutate: signUpMutation,
     isError,
@@ -53,8 +58,8 @@ export function useSignUp(): IUseSignUp {
     {
       mutationFn: async (formData: RegisterCredentials) => signUp(formData),
       onSuccess: (data: SuccessResponse) => {
-        console.log("signup data", data);
         toast.success(data.message || "Account Created Successfully");
+        queryClient.setQueryData([QUERY_KEY.user], data);
         saveUser(data);
         navigate("/");
       },

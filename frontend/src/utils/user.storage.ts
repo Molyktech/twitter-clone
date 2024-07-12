@@ -13,5 +13,7 @@ export function getUser(): IUser | null {
 }
 
 export function removeUser(): void {
+  console.log("remove user");
   localStorage.removeItem(USER_LOCAL_STORAGE_KEY);
+  console.log("remove user", getUser());
 }

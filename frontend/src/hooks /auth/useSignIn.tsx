@@ -1,4 +1,8 @@
-import { UseMutateFunction, useMutation } from "@tanstack/react-query";
+import {
+  UseMutateFunction,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import {
@@ -7,6 +11,7 @@ import {
   SuccessResponse,
 } from "../../models/type/auth";
 import { saveUser } from "../../utils/user.storage";
+import { QUERY_KEY } from "../../utils/constants";
 
 async function signIn(formValues: LoginCredentials): Promise<SuccessResponse> {
   const response = await fetch("/api/auth/login", {
@@ -36,6 +41,7 @@ type IUseSignIn = {
 
 export function useSignIn(): IUseSignIn {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const {
     mutate: signInMutation,
@@ -47,6 +53,7 @@ export function useSignIn(): IUseSignIn {
     onSuccess: (data: SuccessResponse) => {
       toast.success(data.message || "Login Successful");
       saveUser(data);
+      queryClient.setQueryData([QUERY_KEY.user], data);
       navigate("/");
     },
     onError: (error: ErrorResponse) => {

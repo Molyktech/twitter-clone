@@ -9,7 +9,7 @@ async function getUser(): Promise<IUser> {
     const response = await fetch(`/api/auth/get-user/`);
     const data = await response.json();
     if (!response.ok || data.error) throw new Error(data.error);
-    console.log("auth user", data);
+
     return data;
   } catch (error) {
     throw error as Error;
@@ -25,6 +25,7 @@ export function useUser(): IUseUser {
   const { data: authUser, isLoading } = useQuery<IUser | null>({
     queryKey: [QUERY_KEY.user],
     queryFn: getUser,
+    retry: false,
     initialData: userLocalStorage.getUser,
   });
 

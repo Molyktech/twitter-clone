@@ -1,8 +1,13 @@
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { ErrorResponse } from "../../models/type/auth";
-import { UseMutateFunction, useMutation } from "@tanstack/react-query";
+import {
+  UseMutateFunction,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { removeUser } from "../../utils/user.storage";
+import { QUERY_KEY } from "../../utils/constants";
 
 type IUseSignOut = UseMutateFunction<SuccessResponse, ErrorResponse>;
 
@@ -29,7 +34,7 @@ async function signOut(): Promise<SuccessResponse> {
 
 export function useSignOut(): IUseSignOut {
   const navigate = useNavigate();
-
+  const queryClient = useQueryClient();
   const { mutate: signOutMutation } = useMutation<
     SuccessResponse,
     ErrorResponse
@@ -38,6 +43,8 @@ export function useSignOut(): IUseSignOut {
     onSuccess: (data: SuccessResponse) => {
       toast.success(data.message || "Logout Successful");
       removeUser();
+      queryClient.setQueryData([QUERY_KEY.user], null);
+
       navigate("/login");
     },
     onError: (error: ErrorResponse) => {
