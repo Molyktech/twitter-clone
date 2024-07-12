@@ -5,6 +5,7 @@ import { QUERY_KEY } from "../../utils/constants";
 import PostSkeleton from "../skeletons/PostSkeleton";
 import Post from "./Post";
 import { useEffect } from "react";
+import { toast } from "react-hot-toast";
 
 const Posts = ({ feedType }: { feedType: string }) => {
   const POST_ENDPOINT = getPostEndpoint(feedType);
@@ -12,12 +13,18 @@ const Posts = ({ feedType }: { feedType: string }) => {
   const {
     data: posts,
     isLoading,
+    isError,
+    error,
     refetch,
     isRefetching,
   } = useQuery<IPost[]>({
     queryKey: [QUERY_KEY.posts],
     queryFn: () => getPosts(POST_ENDPOINT),
   });
+
+  const notify = () => {
+    toast.error(error?.message || "Ops.. Error on fetching posts. Try again!");
+  };
 
   useEffect(() => {
     refetch();
@@ -42,6 +49,7 @@ const Posts = ({ feedType }: { feedType: string }) => {
           ))}
         </div>
       )}
+      <>{isError && notify()}</>
     </>
   );
 };

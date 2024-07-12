@@ -5,7 +5,17 @@ import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { IPost } from "../../models";
+import { IPost, IUser } from "../../models";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  DefaultSuccessResponse,
+  ErrorResponse,
+  SuccessResponse,
+} from "../../models/type/auth";
+import { FORMATTED_DATE, QUERY_KEY } from "../../utils/constants";
+import { deletePost } from "../../utils/api";
+import toast from "react-hot-toast";
+import LoadingSpinner from "./LoadingSpinner";
 
 type PostProps = {
   post: IPost;
@@ -13,16 +23,36 @@ type PostProps = {
 
 const Post = ({ post }: PostProps) => {
   const [comment, setComment] = useState("");
+  const queryClient = useQueryClient();
+  const { data: authUser } = useQuery<IUser | SuccessResponse>({
+    queryKey: ["authUser"],
+  });
   const postOwner = post.user;
   const isLiked = false;
+  const isMyPost = authUser?._id === post.user?._id;
 
-  const isMyPost = true;
-
-  const formattedDate = "1h";
+  const { mutate: deletePostMutation, isPending } = useMutation<
+    DefaultSuccessResponse,
+    ErrorResponse,
+    string,
+    unknown
+  >({
+    mutationFn: async (postId) => deletePost(postId),
+    onSuccess: (data: DefaultSuccessResponse) => {
+      toast.success(data.message || "Post Deleted");
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY.posts] });
+    },
+    onError: (error: ErrorResponse) => {
+      const err = "Ops.. Error on delete post. Try again!";
+      toast.error(error.message || err);
+    },
+  });
 
   const isCommenting = false;
 
-  const handleDeletePost = () => {};
+  const handleDeletePost = () => {
+    deletePostMutation(post._id);
+  };
 
   const handlePostComment = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,14 +81,18 @@ const Post = ({ post }: PostProps) => {
                 @{postOwner.userName}
               </Link>
               <span>·</span>
-              <span>{formattedDate}</span>
+              <span>{FORMATTED_DATE}</span>
             </span>
             {isMyPost && (
               <span className="flex justify-end flex-1">
-                <FaTrash
-                  className="cursor-pointer hover:text-red-500"
-                  onClick={handleDeletePost}
-                />
+                {isPending ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  <FaTrash
+                    className="cursor-pointer hover:text-red-500"
+                    onClick={handleDeletePost}
+                  />
+                )}
               </span>
             )}
           </div>

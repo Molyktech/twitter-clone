@@ -26,3 +26,8 @@ export type ErrorResponse = {
   error: string;
   message: string;
 };
+
+
+export type DefaultSuccessResponse = {
+  message: string;
+};
