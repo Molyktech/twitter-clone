@@ -1,3 +1,4 @@
+import { IPost } from "../models";
 import { storage } from "./storage";
 
 export interface AuthResponse {
@@ -17,8 +18,9 @@ export async function handleApiResponse(response: Response) {
   if (response.ok) {
     return data;
   } else {
-    console.error(JSON.stringify(data, null, 2));
-    return Promise.reject(data);
+    // console.error(JSON.stringify(data, null, 2));
+    // return Promise.reject(data);
+    throw new Error(data.error);
   }
 }
 
@@ -30,24 +32,17 @@ export function getUserProfile(): Promise<{ user: User | undefined }> {
   }).then(handleApiResponse);
 }
 
-export function loginWithEmailAndPassword(
-  data: unknown
-): Promise<AuthResponse> {
-  return fetch("/auth/login", {
-    method: "POST",
-    body: JSON.stringify(data),
-  }).then(handleApiResponse);
+export function getPosts(url: string): Promise<IPost[]> {
+  return fetch(url).then(handleApiResponse);
 }
 
-export function registerWithEmailAndPassword(
-  data: unknown
-): Promise<AuthResponse> {
-  return fetch("/auth/register", {
-    method: "POST",
-    body: JSON.stringify(data),
-  }).then(handleApiResponse);
-}
-
-export function logout(): Promise<{ message: string }> {
-  return fetch("/auth/logout", { method: "POST" }).then(handleApiResponse);
-}
+export const getPostEndpoint = (feedType: string) => {
+  switch (feedType) {
+    case "forYou":
+      return "/api/posts";
+    case "following":
+      return "/api/posts/following-post";
+    default:
+      return "/api/posts";
+  }
+};

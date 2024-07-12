@@ -1,26 +1,44 @@
-import Post from "./Post";
+import { useQuery } from "@tanstack/react-query";
+import { IPost } from "../../models";
+import { getPostEndpoint, getPosts } from "../../utils/api";
+import { QUERY_KEY } from "../../utils/constants";
 import PostSkeleton from "../skeletons/PostSkeleton";
-import { POSTS } from "../../utils/db/mock";
+import Post from "./Post";
+import { useEffect } from "react";
 
-const Posts = () => {
-  const isLoading = false;
+const Posts = ({ feedType }: { feedType: string }) => {
+  const POST_ENDPOINT = getPostEndpoint(feedType);
+
+  const {
+    data: posts,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useQuery<IPost[]>({
+    queryKey: [QUERY_KEY.posts],
+    queryFn: () => getPosts(POST_ENDPOINT),
+  });
+
+  useEffect(() => {
+    refetch();
+  }, [feedType, refetch]);
 
   return (
     <>
-      {isLoading && (
+      {(isLoading || isRefetching) && (
         <div className="flex flex-col justify-center">
           <PostSkeleton />
           <PostSkeleton />
           <PostSkeleton />
         </div>
       )}
-      {!isLoading && POSTS?.length === 0 && (
+      {!isLoading && !isRefetching && posts?.length === 0 && (
         <p className="text-center my-4">No posts in this tab. Switch 👻</p>
       )}
-      {!isLoading && POSTS && (
+      {!isLoading && !isRefetching && posts && (
         <div>
-          {POSTS.map((post) => (
-            <Post key={post._id} post={post} />
+          {posts.map((post: unknown) => (
+            <Post key={(post as IPost)._id} post={post as IPost} />
           ))}
         </div>
       )}
