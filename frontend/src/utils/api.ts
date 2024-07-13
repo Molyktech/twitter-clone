@@ -23,7 +23,11 @@ export async function handleApiResponse(response: Response) {
       throw new Error(data.error || "Something went wrong");
     }
   } catch (error) {
-    throw new Error(error as string);
+    if (response.status === 413) {
+      throw new Error("Image too large");
+    } else {
+      throw new Error(error as string);
+    }
   }
 }
 

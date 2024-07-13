@@ -15,7 +15,7 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-app.use(express.json()); // for parsing application/json req.body
+app.use(express.json({limit: "5mb"})); // for parsing application/json req.body
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded req.body
 app.use(cookieParser());
 

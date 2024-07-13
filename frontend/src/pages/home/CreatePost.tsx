@@ -13,6 +13,7 @@ import { createPost } from "../../utils/api";
 
 const CreatePost = () => {
   const [text, setText] = useState("");
+  const [uploadError, setUploadError] = useState("");
   const [img, setImg] = useState<string | ArrayBuffer | null>(null);
   const imgRef = useRef<HTMLInputElement | null>(null);
 
@@ -25,7 +26,6 @@ const CreatePost = () => {
     mutate: createPostMutation,
     isPending,
     isError,
-    error,
   } = useMutation<IPostSuccessResponse, ErrorResponse, ICreatePost>({
     mutationFn: async ({ text, image }) => createPost({ text, image }),
     onSuccess: () => {
@@ -37,11 +37,13 @@ const CreatePost = () => {
     onError: (error: ErrorResponse) => {
       const err = "Ops.. Error on create post. Try again!";
       toast.error(error.message || err);
+      setUploadError(error.message || err);
     },
   });
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     createPostMutation({ text, image: img as string });
   };
 
@@ -77,6 +79,7 @@ const CreatePost = () => {
               onClick={() => {
                 setImg(null);
                 imgRef.current!.value = "";
+                setUploadError("");
               }}
             />
             <img
@@ -99,11 +102,7 @@ const CreatePost = () => {
             {isPending ? "Posting..." : "Post"}
           </button>
         </div>
-        {isError && (
-          <div className="text-red-500">
-            {error.message || "Something went wrong"}
-          </div>
-        )}
+        {isError && <div className="text-red-500">{uploadError}</div>}
       </form>
     </div>
   );
