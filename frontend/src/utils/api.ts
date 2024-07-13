@@ -1,4 +1,4 @@
-import { IPost } from "../models";
+import { ICreatePost, IPost, IPostSuccessResponse } from "../models";
 import { API_ENDPOINT } from "./constants";
 import { storage } from "./storage";
 
@@ -42,6 +42,19 @@ export function getPosts(url: string): Promise<IPost[]> {
 export function deletePost(postId: string): Promise<{ message: string }> {
   return fetch(API_ENDPOINT.POSTS.DELETE(postId), {
     method: "DELETE",
+  }).then(handleApiResponse);
+}
+
+export function createPost({
+  text,
+  image,
+}: ICreatePost): Promise<IPostSuccessResponse> {
+  return fetch(API_ENDPOINT.POSTS.CREATE, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text, image }),
   }).then(handleApiResponse);
 }
 

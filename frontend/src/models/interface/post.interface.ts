@@ -21,3 +21,13 @@ export interface IPost {
 }
 
 
+export interface ICreatePost {
+  text: string;
+  image?: string;
+}
+
+export interface IPostSuccessResponse {
+  user: string;
+  text: string;
+  image: string;
+}
