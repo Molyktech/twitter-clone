@@ -1,6 +1,7 @@
 export const QUERY_KEY = {
   user: "authUser",
   posts: "posts",
+  suggestedUsers: "suggestedUsers",
 };
 
 export const API_ENDPOINT = {
@@ -13,6 +14,9 @@ export const API_ENDPOINT = {
     USER_POSTS: "/api/posts/user-post",
     FOLLOWING_POSTS: "/api/posts/following-post",
     LIKE_UNLIKE: (postId: string) => `/api/posts/like-unlike/${postId}`,
+  },
+  USERS: {
+    SUGGESTED: "/api/users/suggested",
   },
 };
 export const FORMATTED_DATE = "1h";

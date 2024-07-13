@@ -1,27 +1,14 @@
-import { ICreatePost, IPost, IPostSuccessResponse } from "../models";
+import { ICreatePost, IPost, IPostSuccessResponse, IUser } from "../models";
 import { API_ENDPOINT } from "./constants";
 import { storage } from "./storage";
-
-export interface AuthResponse {
-  user: User;
-  jwt: string;
-}
-
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-}
 
 export async function handleApiResponse(response: Response) {
   try {
     const data = await response.json();
     if (response.ok) {
       return data;
-    } else {
-      // return Promise.reject(data);
-      throw new Error(data.error || "Something went wrong");
     }
+    throw new Error(data.error || "Something went wrong");
   } catch (error) {
     if (response.status === 413) {
       throw new Error("Image too large");
@@ -31,7 +18,7 @@ export async function handleApiResponse(response: Response) {
   }
 }
 
-export function getUserProfile(): Promise<{ user: User | undefined }> {
+export function getUserProfile(): Promise<{ user: IUser | undefined }> {
   return fetch("/auth/me", {
     headers: {
       Authorization: storage.getToken(),
@@ -62,6 +49,9 @@ export function createPost({
   }).then(handleApiResponse);
 }
 
+export function getSuggestedUsers(): Promise<IUser[]> {
+  return fetch(API_ENDPOINT.USERS.SUGGESTED).then(handleApiResponse);
+}
 export const getPostEndpoint = (feedType: string) => {
   switch (feedType) {
     case "forYou":
