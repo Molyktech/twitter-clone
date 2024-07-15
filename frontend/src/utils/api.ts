@@ -67,12 +67,20 @@ export function followUnfollowUser(userId: string): Promise<IFollowResponse> {
 export function getSuggestedUsers(): Promise<IUser[]> {
   return fetch(API_ENDPOINT.USERS.SUGGESTED).then(handleApiResponse);
 }
-export const getPostEndpoint = (feedType: string) => {
+export const getPostEndpoint = (
+  feedType: string,
+  userName?: string,
+  userId?: string
+) => {
   switch (feedType) {
     case "forYou":
       return "/api/posts";
     case "following":
       return "/api/posts/following-post";
+    case "posts":
+      return API_ENDPOINT.POSTS.USER_POSTS(userName || "");
+    case "likes":
+      return API_ENDPOINT.POSTS.LIKED(userId || "");
     default:
       return "/api/posts";
   }
@@ -86,7 +94,6 @@ export const likeUnlikePost = (postId: string) => {
     },
   }).then(handleApiResponse);
 };
-
 
 export const commentOnPost = (postId: string, text: string) => {
   return fetch(API_ENDPOINT.POSTS.COMMENT(postId), {
@@ -112,4 +119,8 @@ export const deleteSingleNotification = (notificationId: string) => {
   return fetch(API_ENDPOINT.NOTIFICATIONS.SINGLE(notificationId), {
     method: "DELETE",
   }).then(handleApiResponse);
+};
+
+export const getProfile = (username: string): Promise<IUser> => {
+  return fetch(API_ENDPOINT.PROFILE.USER(username)).then(handleApiResponse);
 };

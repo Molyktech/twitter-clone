@@ -3,6 +3,7 @@ export const QUERY_KEY = {
   posts: "posts",
   suggestedUsers: "suggestedUsers",
   notifications: "notifications",
+  profile: "profile",
 };
 
 export const API_ENDPOINT = {
@@ -10,9 +11,9 @@ export const API_ENDPOINT = {
     ALL: "/api/posts",
     CREATE: "/api/posts/create",
     DELETE: (postId: string) => `/api/posts/${postId}`,
-    LIKED: "/api/posts/likes",
+    LIKED: (userId: string) => `/api/posts/likes/${userId}`,
     COMMENT: (postId: string) => `/api/posts/comment/${postId}`,
-    USER_POSTS: "/api/posts/user-post",
+    USER_POSTS: (userName: string) => `/api/posts/user-post/${userName}`,
     FOLLOWING_POSTS: "/api/posts/following-post",
     LIKE_UNLIKE: (postId: string) => `/api/posts/like/${postId}`,
   },
@@ -23,6 +24,9 @@ export const API_ENDPOINT = {
   NOTIFICATIONS: {
     ALL: "/api/notifications",
     SINGLE: (notificationId: string) => `/api/notifications/${notificationId}`,
+  },
+  PROFILE: {
+    USER: (username: string) => `/api/users/profile/${username}`,
   },
 };
 export const FORMATTED_DATE = "1h";

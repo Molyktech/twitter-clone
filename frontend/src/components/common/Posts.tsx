@@ -7,8 +7,16 @@ import Post from "./Post";
 import { useEffect } from "react";
 import { toast } from "react-hot-toast";
 
-const Posts = ({ feedType }: { feedType: string }) => {
-  const POST_ENDPOINT = getPostEndpoint(feedType);
+const Posts = ({
+  feedType,
+  userId,
+  userName,
+}: {
+  feedType: string;
+  userName?: string;
+  userId?: string;
+}) => {
+  const POST_ENDPOINT = getPostEndpoint(feedType, userName, userId);
 
   const {
     data: posts,
@@ -28,7 +36,7 @@ const Posts = ({ feedType }: { feedType: string }) => {
 
   useEffect(() => {
     refetch();
-  }, [feedType, refetch]);
+  }, [feedType, refetch, userName]);
 
   return (
     <>

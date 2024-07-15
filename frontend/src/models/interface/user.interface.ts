@@ -5,6 +5,7 @@ export interface IUser {
   userName: string;
   fullName: string;
   profileImg: string;
+  coverImg: string;
   bio?: string;
   link?: string;
   followers?: string[];

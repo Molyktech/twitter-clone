@@ -1,64 +1,88 @@
-import { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { FaLink } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa6";
+import { IoCalendarOutline } from "react-icons/io5";
+import { MdEdit } from "react-icons/md";
+import { Link, useParams } from "react-router-dom";
 
 import Posts from "../../components/common/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
-import EditProfileModal from "./modal/EditProfileModal";
-
+import { IUser } from "../../models";
+import { getProfile } from "../../utils/api";
+import { QUERY_KEY } from "../../utils/constants";
 import { POSTS } from "../../utils/db/mock";
+import EditProfileModal from "./modal/EditProfileModal";
+import { formatMemberSinceDate } from "../../utils/date";
+import { SuccessResponse } from "../../models/type/auth";
+import useFollow from "../../hooks /useFollow";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
-import { FaArrowLeft } from "react-icons/fa6";
-import { IoCalendarOutline } from "react-icons/io5";
-import { FaLink } from "react-icons/fa";
-import { MdEdit } from "react-icons/md";
-
-// import {getUserProfile} from "../../../../backend/controllers/user.controller";
-
-const getUserProfile = () => {
-  const [coverImg, setCoverImg] = useState(null);
-  const [profileImg, setProfileImg] = useState(null);
+const GetUserProfile = () => {
+  const [coverImg, setCoverImg] = useState<string | null>(null);
+  const [profileImg, setProfileImg] = useState<string | null>(null);
   const [feedType, setFeedType] = useState("posts");
 
-  const coverImgRef = useRef(null);
-  const profileImgRef = useRef(null);
+  const coverImgRef = useRef<HTMLInputElement>(null);
+  const profileImgRef = useRef<HTMLInputElement>(null);
 
-  const isLoading = false;
-  const isMyProfile = true;
+  const { followUnfollowMutation, isPending } = useFollow();
+  const { userName } = useParams<{ userName: string }>();
+  const { data: authUser } = useQuery<IUser | SuccessResponse>({
+    queryKey: [QUERY_KEY.user],
+  });
+  const {
+    data: user,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useQuery<IUser>({
+    queryKey: [QUERY_KEY.profile],
+    queryFn: async () => getProfile(userName || ""),
+  });
 
-  const user = {
-    _id: "1",
-    fullName: "John Doe",
-    username: "johndoe",
-    profileImg: "/avatars/boy2.png",
-    coverImg: "/cover.png",
-    bio: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    link: "https://youtube.com/@asaprogrammer_",
-    following: ["1", "2", "3"],
-    followers: ["1", "2", "3"],
-  };
-
-  const handleImgChange = (e, state) => {
-    const file = e.target.files[0];
+  const handleImgChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    state: string
+  ) => {
+    const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        state === "coverImg" && setCoverImg(reader.result);
-        state === "profileImg" && setProfileImg(reader.result);
+        state === "coverImg" && setCoverImg(reader.result as string);
+        state === "profileImg" && setProfileImg(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
+  const isMyProfile = authUser?._id === user?._id;
+  const amIFollowing = authUser?.following?.includes(user?._id || "");
 
+  useEffect(() => {
+    refetch();
+  }, [userName, refetch]);
+
+  // const {mutate: updateCurrentUserProfileMutation} = useMutation<SuccessResponse, ErrorResponse, IUser>({
+  //   mutationFn: (user: IUser) => updateCurrentUserProfile(user),
+  //   onSuccess: (data) => {
+  //     toast.success(data.message);
+  //     refetch();
+  //   },
+  //   onError: (error) => {
+  //     toast.error(error.message);
+  //   },
+  // });
+  // }
   return (
     <>
       <div className="flex-[4_4_0]  border-r border-gray-700 min-h-screen ">
         {/* HEADER */}
-        {isLoading && <ProfileHeaderSkeleton />}
-        {!isLoading && !user && (
+        {(isLoading || isRefetching) && <ProfileHeaderSkeleton />}
+        {!isLoading && !isRefetching && !user && (
           <p className="text-center text-lg mt-4">User not found</p>
         )}
         <div className="flex flex-col">
-          {!isLoading && user && (
+          {!isLoading && !isRefetching && user && (
             <>
               <div className="flex gap-10 px-4 py-2 items-center">
                 <Link to="/">
@@ -81,7 +105,7 @@ const getUserProfile = () => {
                 {isMyProfile && (
                   <div
                     className="absolute top-2 right-2 rounded-full p-2 bg-gray-800 bg-opacity-75 cursor-pointer opacity-0 group-hover/cover:opacity-100 transition duration-200"
-                    onClick={() => coverImgRef.current.click()}
+                    onClick={() => coverImgRef.current?.click()}
                   >
                     <MdEdit className="w-5 h-5 text-white" />
                   </div>
@@ -115,7 +139,7 @@ const getUserProfile = () => {
                       {isMyProfile && (
                         <MdEdit
                           className="w-4 h-4 text-white"
-                          onClick={() => profileImgRef.current.click()}
+                          onClick={() => profileImgRef.current?.click()}
                         />
                       )}
                     </div>
@@ -127,9 +151,15 @@ const getUserProfile = () => {
                 {!isMyProfile && (
                   <button
                     className="btn btn-outline rounded-full btn-sm"
-                    onClick={() => alert("Followed successfully")}
+                    onClick={() => followUnfollowMutation(user?._id || "")}
                   >
-                    Follow
+                    {isPending ? (
+                      <LoadingSpinner size="sm" />
+                    ) : amIFollowing ? (
+                      "UnFollow"
+                    ) : (
+                      "Follow"
+                    )}
                   </button>
                 )}
                 {(coverImg || profileImg) && (
@@ -146,7 +176,7 @@ const getUserProfile = () => {
                 <div className="flex flex-col">
                   <span className="font-bold text-lg">{user?.fullName}</span>
                   <span className="text-sm text-slate-500">
-                    @{user?.username}
+                    @{user?.userName}
                   </span>
                   <span className="text-sm my-1">{user?.bio}</span>
                 </div>
@@ -157,12 +187,12 @@ const getUserProfile = () => {
                       <>
                         <FaLink className="w-3 h-3 text-slate-500" />
                         <a
-                          href="https://youtube.com/@asaprogrammer_"
+                          href={user?.link}
                           target="_blank"
                           rel="noreferrer"
                           className="text-sm text-blue-500 hover:underline"
                         >
-                          youtube.com/@asaprogrammer_
+                          {user?.link}
                         </a>
                       </>
                     </div>
@@ -170,20 +200,20 @@ const getUserProfile = () => {
                   <div className="flex gap-2 items-center">
                     <IoCalendarOutline className="w-4 h-4 text-slate-500" />
                     <span className="text-sm text-slate-500">
-                      Joined July 2021
+                      {formatMemberSinceDate(user?.createdAt)}
                     </span>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <div className="flex gap-1 items-center">
                     <span className="font-bold text-xs">
-                      {user?.following.length}
+                      {user?.following?.length}
                     </span>
                     <span className="text-slate-500 text-xs">Following</span>
                   </div>
                   <div className="flex gap-1 items-center">
                     <span className="font-bold text-xs">
-                      {user?.followers.length}
+                      {user?.followers?.length}
                     </span>
                     <span className="text-slate-500 text-xs">Followers</span>
                   </div>
@@ -212,10 +242,10 @@ const getUserProfile = () => {
             </>
           )}
 
-          <Posts />
+          <Posts feedType={feedType} userName={userName} userId={user?._id} />
         </div>
       </div>
     </>
   );
 };
-export default getUserProfile;
+export default GetUserProfile;

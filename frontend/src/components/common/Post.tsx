@@ -18,6 +18,7 @@ import LoadingSpinner from "./LoadingSpinner";
 
 type PostProps = {
   post: IPost;
+
 };
 
 const Post = ({ post }: PostProps) => {
