@@ -97,3 +97,19 @@ export const commentOnPost = (postId: string, text: string) => {
     body: JSON.stringify({ text }),
   }).then(handleApiResponse);
 };
+
+export const getAllNotifications = () => {
+  return fetch(API_ENDPOINT.NOTIFICATIONS.ALL).then(handleApiResponse);
+};
+
+export const deleteAllNotifications = () => {
+  return fetch(API_ENDPOINT.NOTIFICATIONS.ALL, {
+    method: "DELETE",
+  }).then(handleApiResponse);
+};
+
+export const deleteSingleNotification = (notificationId: string) => {
+  return fetch(API_ENDPOINT.NOTIFICATIONS.SINGLE(notificationId), {
+    method: "DELETE",
+  }).then(handleApiResponse);
+};

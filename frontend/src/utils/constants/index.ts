@@ -2,6 +2,7 @@ export const QUERY_KEY = {
   user: "authUser",
   posts: "posts",
   suggestedUsers: "suggestedUsers",
+  notifications: "notifications",
 };
 
 export const API_ENDPOINT = {
@@ -18,6 +19,10 @@ export const API_ENDPOINT = {
   USERS: {
     SUGGESTED: "/api/users/suggested",
     FOLLOW: (userId: string) => `/api/users/follow/${userId}`,
+  },
+  NOTIFICATIONS: {
+    ALL: "/api/notifications",
+    SINGLE: (notificationId: string) => `/api/notifications/${notificationId}`,
   },
 };
 export const FORMATTED_DATE = "1h";

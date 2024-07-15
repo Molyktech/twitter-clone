@@ -2,35 +2,56 @@ import { Link } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 import { IoSettingsOutline } from "react-icons/io5";
-import { FaUser } from "react-icons/fa";
+import { FaTrash, FaUser } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa6";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEY } from "../../utils/constants";
+import {
+  deleteAllNotifications,
+  deleteSingleNotification,
+  getAllNotifications,
+} from "../../utils/api";
+import toast from "react-hot-toast";
+import { DefaultSuccessResponse, ErrorResponse } from "../../models/type/auth";
+import { INotification } from "../../models";
 
 const Notification = () => {
-  const isLoading = false;
-  const notifications = [
-    {
-      _id: "1",
-      from: {
-        _id: "1",
-        username: "johndoe",
-        profileImg: "/avatars/boy2.png",
-      },
-      type: "follow",
-    },
-    {
-      _id: "2",
-      from: {
-        _id: "2",
-        username: "janedoe",
-        profileImg: "/avatars/girl1.png",
-      },
-      type: "like",
-    },
-  ];
+  const queryClient = useQueryClient();
 
-  const deleteNotifications = () => {
-    alert("All notifications deleted");
-  };
+  const { data: notifications, isLoading } = useQuery<INotification[]>({
+    queryKey: [QUERY_KEY.notifications],
+    queryFn: getAllNotifications,
+  });
+
+  const { mutate: deleteNotificationsMutation, isPending: isDeletingAll } =
+    useMutation<DefaultSuccessResponse, ErrorResponse>({
+      mutationFn: deleteAllNotifications,
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEY.notifications],
+        });
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    });
+
+  const {
+    mutate: deleteSingleNotificationMutation,
+    isPending: isDeletingSingle,
+  } = useMutation<DefaultSuccessResponse, ErrorResponse, string>({
+    mutationFn: (notificationId: string) =>
+      deleteSingleNotification(notificationId),
+    onSuccess: () => {
+      toast.success("Notification deleted successfully");
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEY.notifications],
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   return (
     <>
@@ -39,14 +60,20 @@ const Notification = () => {
           <p className="font-bold">Notifications</p>
           <div className="dropdown ">
             <div tabIndex={0} role="button" className="m-1">
-              <IoSettingsOutline className="w-4" />
+              {isDeletingAll ? (
+                <LoadingSpinner size="md" />
+              ) : (
+                <IoSettingsOutline className="w-4" />
+              )}
             </div>
             <ul
               tabIndex={0}
               className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
             >
               <li>
-                <a onClick={deleteNotifications}>Delete all notifications</a>
+                <a onClick={() => deleteNotificationsMutation()}>
+                  Delete all notifications
+                </a>
               </li>
             </ul>
           </div>
@@ -61,33 +88,45 @@ const Notification = () => {
         )}
         {notifications?.map((notification) => (
           <div className="border-b border-gray-700" key={notification._id}>
-            <div className="flex gap-2 p-4">
-              {notification.type === "follow" && (
-                <FaUser className="w-7 h-7 text-primary" />
-              )}
-              {notification.type === "like" && (
-                <FaHeart className="w-7 h-7 text-red-500" />
-              )}
-              <Link to={`/profile/${notification.from.username}`}>
-                <div className="avatar">
-                  <div className="w-8 rounded-full">
-                    <img
-                      src={
-                        notification.from.profileImg ||
-                        "/avatar-placeholder.png"
-                      }
-                    />
+            <div className="flex justify-between items-center p-4">
+              <div className="flex gap-2">
+                {notification.type === "follow" && (
+                  <FaUser className="w-7 h-7 text-primary" />
+                )}
+                {notification.type === "like" && (
+                  <FaHeart className="w-7 h-7 text-red-500" />
+                )}
+                <Link to={`/profile/${notification.from?.userName}`}>
+                  <div className="avatar">
+                    <div className="w-8 rounded-full">
+                      <img
+                        src={
+                          notification.from?.profileImg ||
+                          "/avatar-placeholder.png"
+                        }
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="flex gap-1">
-                  <span className="font-bold">
-                    @{notification.from.username}
-                  </span>{" "}
-                  {notification.type === "follow"
-                    ? "followed you"
-                    : "liked your post"}
-                </div>
-              </Link>
+                  <div className="flex gap-1">
+                    <span className="font-bold">
+                      @{notification.from?.userName}
+                    </span>{" "}
+                    {notification.type === "follow"
+                      ? "followed you"
+                      : "liked your post"}
+                  </div>
+                </Link>
+              </div>
+              {isDeletingSingle ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <FaTrash
+                  onClick={() =>
+                    deleteSingleNotificationMutation(notification._id)
+                  }
+                  className=" text-red-500 cursor-pointer"
+                />
+              )}
             </div>
           </div>
         ))}
