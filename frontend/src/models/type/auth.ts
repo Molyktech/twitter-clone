@@ -30,4 +30,5 @@ export type ErrorResponse = {
 
 export type DefaultSuccessResponse = {
   message: string;
+  updatedLikes?: string[];
 };

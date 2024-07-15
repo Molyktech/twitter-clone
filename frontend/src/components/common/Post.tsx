@@ -13,7 +13,7 @@ import {
   SuccessResponse,
 } from "../../models/type/auth";
 import { FORMATTED_DATE, QUERY_KEY } from "../../utils/constants";
-import { deletePost } from "../../utils/api";
+import { deletePost, likeUnlikePost } from "../../utils/api";
 import toast from "react-hot-toast";
 import LoadingSpinner from "./LoadingSpinner";
 
@@ -28,10 +28,13 @@ const Post = ({ post }: PostProps) => {
     queryKey: ["authUser"],
   });
   const postOwner = post.user;
-  const isLiked = false;
+
+  const isLiked = post.likes.length
+    ? post.likes.includes(authUser?._id ?? "")
+    : false;
   const isMyPost = authUser?._id === post.user?._id;
 
-  const { mutate: deletePostMutation, isPending } = useMutation<
+  const { mutate: deletePostMutation, isPending: isDeleting } = useMutation<
     DefaultSuccessResponse,
     ErrorResponse,
     string,
@@ -48,7 +51,34 @@ const Post = ({ post }: PostProps) => {
     },
   });
 
-  const isCommenting = false;
+  const { mutate: likePostMutation, isPending: isLikePending } = useMutation<
+    DefaultSuccessResponse,
+    ErrorResponse,
+    string
+  >({
+    mutationFn: async (postId) => likeUnlikePost(postId),
+    onSuccess: (data: DefaultSuccessResponse) => {
+      toast.success(data.message || "Post liked");
+      // update the cache
+      queryClient.setQueryData<IPost[]>([QUERY_KEY.posts], (oldData) => {
+        return oldData?.map((oldPost) => {
+          if (oldPost._id === post._id) {
+            return {
+              ...oldPost,
+              likes: data.updatedLikes,
+            } as IPost;
+          }
+          return oldPost;
+        }) as IPost[] | undefined;
+      });
+    },
+    onError: (error: ErrorResponse) => {
+      const err = "Ops.. Error on like post. Try again!";
+      toast.error(error.message || err);
+    },
+  });
+
+  const isCommenting = true;
 
   const handleDeletePost = () => {
     deletePostMutation(post._id);
@@ -58,7 +88,10 @@ const Post = ({ post }: PostProps) => {
     e.preventDefault();
   };
 
-  const handleLikePost = () => {};
+  const handleLikePost = () => {
+    if (isLikePending) return;
+    likePostMutation(post._id);
+  };
 
   return (
     <>
@@ -85,7 +118,7 @@ const Post = ({ post }: PostProps) => {
             </span>
             {isMyPost && (
               <span className="flex justify-end flex-1">
-                {isPending ? (
+                {isDeleting ? (
                   <LoadingSpinner size="sm" />
                 ) : (
                   <FaTrash
@@ -110,7 +143,11 @@ const Post = ({ post }: PostProps) => {
             <div className="flex gap-4 items-center w-2/3 justify-between">
               <div
                 className="flex gap-1 items-center cursor-pointer group"
-                // onClick={() => document.getElementById("comments_modal" + post._id).showModal()}
+                onClick={() =>
+                  (document.getElementById(
+                    "comments_modal" + post._id
+                  ) as HTMLDialogElement)!.showModal()
+                }
               >
                 <FaRegComment className="w-4 h-4  text-slate-500 group-hover:text-sky-400" />
                 <span className="text-sm text-slate-500 group-hover:text-sky-400">
@@ -167,11 +204,7 @@ const Post = ({ post }: PostProps) => {
                       onChange={(e) => setComment(e.target.value)}
                     />
                     <button className="btn btn-primary rounded-full btn-sm text-white px-4">
-                      {isCommenting ? (
-                        <span className="loading loading-spinner loading-md"></span>
-                      ) : (
-                        "Post"
-                      )}
+                      {isCommenting ? <LoadingSpinner size="sm" /> : "Post"}
                     </button>
                   </form>
                 </div>
@@ -189,16 +222,17 @@ const Post = ({ post }: PostProps) => {
                 className="flex gap-1 items-center group cursor-pointer"
                 onClick={handleLikePost}
               >
-                {!isLiked && (
+                {isLikePending && <LoadingSpinner size="sm" />}
+                {!isLiked && !isLikePending && (
                   <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500" />
                 )}
-                {isLiked && (
+                {isLiked && !isLikePending && (
                   <FaRegHeart className="w-4 h-4 cursor-pointer text-pink-500 " />
                 )}
 
                 <span
-                  className={`text-sm text-slate-500 group-hover:text-pink-500 ${
-                    isLiked ? "text-pink-500" : ""
+                  className={`text-sm  group-hover:text-pink-500 ${
+                    isLiked ? "text-pink-500" : "text-slate-500"
                   }`}
                 >
                   {post.likes.length}

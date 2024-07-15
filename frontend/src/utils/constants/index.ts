@@ -13,10 +13,11 @@ export const API_ENDPOINT = {
     COMMENT: (postId: string) => `/api/posts/comment/${postId}`,
     USER_POSTS: "/api/posts/user-post",
     FOLLOWING_POSTS: "/api/posts/following-post",
-    LIKE_UNLIKE: (postId: string) => `/api/posts/like-unlike/${postId}`,
+    LIKE_UNLIKE: (postId: string) => `/api/posts/like/${postId}`,
   },
   USERS: {
     SUGGESTED: "/api/users/suggested",
+    FOLLOW: (userId: string) => `/api/users/follow/${userId}`,
   },
 };
 export const FORMATTED_DATE = "1h";

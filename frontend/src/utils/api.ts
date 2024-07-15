@@ -1,4 +1,10 @@
-import { ICreatePost, IPost, IPostSuccessResponse, IUser } from "../models";
+import {
+  ICreatePost,
+  IFollowResponse,
+  IPost,
+  IPostSuccessResponse,
+  IUser,
+} from "../models";
 import { API_ENDPOINT } from "./constants";
 import { storage } from "./storage";
 
@@ -49,6 +55,15 @@ export function createPost({
   }).then(handleApiResponse);
 }
 
+export function followUnfollowUser(userId: string): Promise<IFollowResponse> {
+  return fetch(API_ENDPOINT.USERS.FOLLOW(userId), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then(handleApiResponse);
+}
+
 export function getSuggestedUsers(): Promise<IUser[]> {
   return fetch(API_ENDPOINT.USERS.SUGGESTED).then(handleApiResponse);
 }
@@ -61,4 +76,13 @@ export const getPostEndpoint = (feedType: string) => {
     default:
       return "/api/posts";
   }
+};
+
+export const likeUnlikePost = (postId: string) => {
+  return fetch(API_ENDPOINT.POSTS.LIKE_UNLIKE(postId), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then(handleApiResponse);
 };

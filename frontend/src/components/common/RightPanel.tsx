@@ -4,12 +4,18 @@ import { IUser } from "../../models";
 import { getSuggestedUsers } from "../../utils/api";
 import { QUERY_KEY } from "../../utils/constants";
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton";
+import useFollow from "../../hooks /useFollow";
+import LoadingSpinner from "./LoadingSpinner";
+import { useState } from "react";
 
 const RightPanel = () => {
+  const [btnIndex, setBtnIndex] = useState<number>(0);
   const { data: suggestedUsersQuery, isLoading } = useQuery<IUser[]>({
     queryKey: [QUERY_KEY.suggestedUsers],
     queryFn: getSuggestedUsers,
   });
+
+  const { followUnfollowMutation, isPending } = useFollow();
 
   if (suggestedUsersQuery?.length === 0)
     return <div className="mf:w-64 w-0"></div>;
@@ -29,7 +35,7 @@ const RightPanel = () => {
             </>
           )}
           {!isLoading &&
-            suggestedUsersQuery?.map((user) => (
+            suggestedUsersQuery?.map((user, index) => (
               <Link
                 to={`/profile/${user.userName}`}
                 className="flex items-center justify-between gap-4"
@@ -53,9 +59,18 @@ const RightPanel = () => {
                 <div>
                   <button
                     className="btn bg-white text-black hover:bg-white hover:opacity-90 rounded-full btn-sm"
-                    onClick={(e) => e.preventDefault()}
+                    disabled={isPending}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setBtnIndex(index);
+                      followUnfollowMutation(user._id);
+                    }}
                   >
-                    Follow
+                    {isPending && btnIndex === index ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      "Follow"
+                    )}
                   </button>
                 </div>
               </Link>

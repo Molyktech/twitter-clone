@@ -25,3 +25,8 @@ export interface IUser {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface IFollowResponse {
+  message: string;
+  user: IUser;
+}
