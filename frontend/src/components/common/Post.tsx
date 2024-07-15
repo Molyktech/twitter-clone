@@ -1,20 +1,19 @@
-import { FaRegComment } from "react-icons/fa";
-import { BiRepost } from "react-icons/bi";
-import { FaRegHeart } from "react-icons/fa";
-import { FaRegBookmark } from "react-icons/fa6";
-import { FaTrash } from "react-icons/fa";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormEvent, useState } from "react";
+import toast from "react-hot-toast";
+import { BiRepost } from "react-icons/bi";
+import { FaRegComment, FaRegHeart, FaTrash } from "react-icons/fa";
+import { FaRegBookmark } from "react-icons/fa6";
 import { Link } from "react-router-dom";
 import { IPost, IUser } from "../../models";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DefaultSuccessResponse,
   ErrorResponse,
   SuccessResponse,
 } from "../../models/type/auth";
-import { FORMATTED_DATE, QUERY_KEY } from "../../utils/constants";
-import { deletePost, likeUnlikePost } from "../../utils/api";
-import toast from "react-hot-toast";
+import { commentOnPost, deletePost, likeUnlikePost } from "../../utils/api";
+import { formatPostDate } from "../../utils/date";
+import { QUERY_KEY } from "../../utils/constants";
 import LoadingSpinner from "./LoadingSpinner";
 
 type PostProps = {
@@ -28,7 +27,6 @@ const Post = ({ post }: PostProps) => {
     queryKey: ["authUser"],
   });
   const postOwner = post.user;
-
   const isLiked = post.likes.length
     ? post.likes.includes(authUser?._id ?? "")
     : false;
@@ -78,7 +76,38 @@ const Post = ({ post }: PostProps) => {
     },
   });
 
-  const isCommenting = true;
+  const { mutate: commentPostMutation, isPending: isCommenting } = useMutation<
+    IPost,
+    ErrorResponse,
+    string
+  >({
+    mutationFn: async (commentText) => commentOnPost(post._id, commentText),
+    onSuccess: (data: IPost) => {
+      toast.success("Comment posted");
+      setComment("");
+      (document.getElementById(
+        "comments_modal" + post._id
+      ) as HTMLDialogElement)!.close();
+      // queryClient.invalidateQueries({ queryKey: [QUERY_KEY.posts] });
+      queryClient.setQueryData<IPost[]>([QUERY_KEY.posts], (oldData) => {
+        return oldData?.map((oldPost) => {
+          if (oldPost._id === post._id) {
+            return {
+              ...oldPost,
+              ...data,
+              // comments: data.comments,
+            } as IPost;
+          }
+
+          return oldPost;
+        }) as IPost[] | undefined;
+      });
+    },
+    onError: (error: ErrorResponse) => {
+      const err = "Ops.. Error on comment post. Try again!";
+      toast.error(error.message || err);
+    },
+  });
 
   const handleDeletePost = () => {
     deletePostMutation(post._id);
@@ -86,6 +115,8 @@ const Post = ({ post }: PostProps) => {
 
   const handlePostComment = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isCommenting || !comment) return;
+    commentPostMutation(comment);
   };
 
   const handleLikePost = () => {
@@ -114,7 +145,7 @@ const Post = ({ post }: PostProps) => {
                 @{postOwner.userName}
               </Link>
               <span>·</span>
-              <span>{FORMATTED_DATE}</span>
+              <span>{formatPostDate(post.createdAt)}</span>
             </span>
             {isMyPost && (
               <span className="flex justify-end flex-1">

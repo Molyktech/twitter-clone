@@ -18,6 +18,8 @@ export interface IPost {
     };
   }[];
   likes: string[];
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 

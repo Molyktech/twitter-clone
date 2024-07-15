@@ -86,3 +86,14 @@ export const likeUnlikePost = (postId: string) => {
     },
   }).then(handleApiResponse);
 };
+
+
+export const commentOnPost = (postId: string, text: string) => {
+  return fetch(API_ENDPOINT.POSTS.COMMENT(postId), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  }).then(handleApiResponse);
+};
